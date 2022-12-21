@@ -93,18 +93,17 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Iterable<String> findPublishersByAuthor(String authorName) {
-		return publisherRepository.findPublishersByAuthor(authorName);
-	}
+		return publisherRepository.findDistinctByBooksAuthorsName(authorName)
+				.map(Publisher::getPublisherName)
+				.collect(Collectors.toList());	}
 
 	@Override
 	@Transactional
 	public AuthorDto removeAuthor(String authorName) {
 		Author author = authorRepository.findById(authorName).orElseThrow(EntityNotFoundException::new);
-		bookRepository.findByAuthorsName(authorName)
-		.map(b -> modelMapper.map(b, BookDto.class))
-		.forEach(b -> remove(b.getIsbn()));
-		authorRepository.deleteById(authorName);
+		authorRepository.delete(author);
 		return modelMapper.map(author, AuthorDto.class);
 	}
 
